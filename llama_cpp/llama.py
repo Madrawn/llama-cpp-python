@@ -718,6 +718,11 @@ class Llama:
         penalize_nl: bool = True,
         logits_processor: Optional[LogitsProcessorList] = None,
         grammar: Optional[LlamaGrammar] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = 512,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ):
         sampler = internals.LlamaSampler()
 
@@ -754,6 +759,56 @@ class Llama:
             # penalize_nl=penalize_nl,
             # ignore_eos=False,
         )
+
+        import sys as _sys
+
+        print(
+            f"[DRY] _init_sampler: dry_multiplier={dry_multiplier} dry_base={dry_base} "
+            f"dry_allowed_length={dry_allowed_length} dry_penalty_last_n={dry_penalty_last_n} "
+            f"dry_sequence_breakers={dry_sequence_breakers}",
+            flush=True,
+            file=_sys.stderr,
+        )
+        if dry_multiplier > 0.0:
+            # # --- PROBE: logit dump after DRY, before top_k/top_p ---
+            # def __dry_probe(prefix):
+            #     def _dry_probe(token_data_array):
+            #         size = token_data_array.contents.size
+            #         arr = token_data_array.contents.data
+            #         ids_logits = [(arr[i].id, arr[i].logit) for i in range(size)]
+            #         ids_logits.sort(key=lambda x: -x[1])
+            #         print(
+            #             f"{prefix} [DRY-probe] top-8: "
+            #             + ", ".join(f"t={t} l={l:.1f}" for t, l in ids_logits[:8]),
+            #             flush=True,
+            #         )
+
+            #     return _dry_probe
+
+            # sampler.add_custom(__dry_probe("before"))
+            # print(
+            #     f"[DRY] add_dry ENABLED: multiplier={dry_multiplier} base={dry_base} "
+            #     f"allowed_length={dry_allowed_length} last_n={dry_penalty_last_n} "
+            #     f"breakers={dry_sequence_breakers}",
+            #     flush=True,
+            #     file=_sys.stderr,
+            # )
+            sampler.add_dry(
+                model=self._model,
+                n_ctx_train=self._model.n_ctx_train(),
+                dry_multiplier=dry_multiplier,
+                dry_base=dry_base,
+                dry_allowed_length=dry_allowed_length,
+                dry_penalty_last_n=dry_penalty_last_n,
+                seq_breakers=(
+                    dry_sequence_breakers
+                    if dry_sequence_breakers is not None
+                    else ["\n", ":", '"', "*"]
+                ),
+            )
+
+            # sampler.add_custom(__dry_probe("after"))
+            # --------------------------------------------------------
 
         if grammar is not None:
             sampler.add_grammar(self._model, grammar)
@@ -806,6 +861,11 @@ class Llama:
         penalize_nl: bool = True,
         logits_processor: Optional[LogitsProcessorList] = None,
         grammar: Optional[LlamaGrammar] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = 512,
+        dry_sequence_breakers: Optional[List[str]] = None,
         idx: Optional[int] = None,
     ):
         """Sample a token from the model.
@@ -841,6 +901,11 @@ class Llama:
                 penalize_nl=penalize_nl,
                 logits_processor=logits_processor,
                 grammar=grammar,
+                dry_multiplier=dry_multiplier,
+                dry_base=dry_base,
+                dry_allowed_length=dry_allowed_length,
+                dry_penalty_last_n=dry_penalty_last_n,
+                dry_sequence_breakers=dry_sequence_breakers,
             )
 
         ridx = idx - self.n_tokens if idx is not None else -1
@@ -865,12 +930,17 @@ class Llama:
         presence_penalty: float = 0.0,
         tfs_z: float = 1.0,
         mirostat_mode: int = 0,
-        mirostat_tau: float = 5.0,
         mirostat_eta: float = 0.1,
+        mirostat_tau: float = 5.0,
         penalize_nl: bool = True,
         logits_processor: Optional[LogitsProcessorList] = None,
         stopping_criteria: Optional[StoppingCriteriaList] = None,
         grammar: Optional[LlamaGrammar] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = 512,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Generator[int, Optional[Sequence[int]], None]:
         """Create a generator of tokens from a prompt.
 
@@ -909,6 +979,11 @@ class Llama:
             penalize_nl=penalize_nl,
             logits_processor=logits_processor,
             grammar=grammar,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
 
         tokens = list(tokens)
@@ -992,6 +1067,11 @@ class Llama:
                     logits_processor=logits_processor,
                     grammar=grammar,
                     penalize_nl=penalize_nl,
+                    dry_multiplier=dry_multiplier,
+                    dry_base=dry_base,
+                    dry_allowed_length=dry_allowed_length,
+                    dry_penalty_last_n=dry_penalty_last_n,
+                    dry_sequence_breakers=dry_sequence_breakers,
                     idx=sample_idx,
                 )
 
@@ -1219,6 +1299,11 @@ class Llama:
         logits_processor: Optional[LogitsProcessorList] = None,
         grammar: Optional[LlamaGrammar] = None,
         logit_bias: Optional[Dict[int, float]] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = 512,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[
         Iterator[CreateCompletionResponse], Iterator[CreateCompletionStreamResponse]
     ]:
@@ -1408,6 +1493,11 @@ class Llama:
             stopping_criteria=stopping_criteria,
             logits_processor=logits_processor,
             grammar=grammar,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         ):
             if llama_cpp.llama_vocab_is_eog(self._model.vocab, token):
                 text = self.detokenize(completion_tokens, prev_tokens=prompt_tokens)
@@ -1839,6 +1929,11 @@ class Llama:
         logits_processor: Optional[LogitsProcessorList] = None,
         grammar: Optional[LlamaGrammar] = None,
         logit_bias: Optional[Dict[int, float]] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = 512,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[CreateCompletionResponse, Iterator[CreateCompletionStreamResponse]]:
         """Generate text from a prompt.
 
@@ -1902,6 +1997,11 @@ class Llama:
             logits_processor=logits_processor,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
         if stream:
             chunks: Iterator[CreateCompletionStreamResponse] = completion_or_chunks
@@ -1936,6 +2036,11 @@ class Llama:
         logits_processor: Optional[LogitsProcessorList] = None,
         grammar: Optional[LlamaGrammar] = None,
         logit_bias: Optional[Dict[int, float]] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = 512,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[CreateCompletionResponse, Iterator[CreateCompletionStreamResponse]]:
         """Generate text from a prompt.
 
@@ -1999,6 +2104,11 @@ class Llama:
             logits_processor=logits_processor,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
 
     def create_chat_completion(
@@ -2031,6 +2141,11 @@ class Llama:
         logit_bias: Optional[Dict[int, float]] = None,
         logprobs: Optional[bool] = None,
         top_logprobs: Optional[int] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = 512,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[
         CreateChatCompletionResponse, Iterator[CreateChatCompletionStreamResponse]
     ]:
@@ -2102,6 +2217,11 @@ class Llama:
             logits_processor=logits_processor,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
 
     def create_chat_completion_openai_v1(
