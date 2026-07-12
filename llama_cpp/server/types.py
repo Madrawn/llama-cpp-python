@@ -151,6 +151,31 @@ class CreateCompletionRequest(BaseModel):
     mirostat_tau: float = mirostat_tau_field
     mirostat_eta: float = mirostat_eta_field
     grammar: Optional[str] = None
+    # DRY sampler parameters
+    dry_multiplier: float = Field(
+        default=0.0,
+        ge=0.0,
+        description="DRY sampler multiplier. 0.0 disables DRY.",
+    )
+    dry_base: float = Field(
+        default=1.75,
+        ge=0.0,
+        description="DRY sampler base.",
+    )
+    dry_allowed_length: int = Field(
+        default=3,
+        ge=0,
+        description="DRY allowed repeat length before penalties apply.",
+    )
+    dry_penalty_last_n: int = Field(
+        default=-1,
+        ge=-1,
+        description="DRY penalty last_n. -1 uses full training context.",
+    )
+    dry_sequence_breakers: List[str] = Field(
+        default=["\n", ":", "\"", "*"],
+        description="DRY sequence breakers.",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -249,6 +274,31 @@ class CreateChatCompletionRequest(BaseModel):
     mirostat_tau: float = mirostat_tau_field
     mirostat_eta: float = mirostat_eta_field
     grammar: Optional[str] = None
+    # DRY sampler parameters
+    dry_multiplier: float = Field(
+        default=0.0,
+        ge=0.0,
+        description="DRY sampler multiplier. 0.0 disables DRY.",
+    )
+    dry_base: float = Field(
+        default=1.75,
+        ge=0.0,
+        description="DRY sampler base.",
+    )
+    dry_allowed_length: int = Field(
+        default=3,
+        ge=0,
+        description="DRY allowed repeat length before penalties apply.",
+    )
+    dry_penalty_last_n: int = Field(
+        default=-1,
+        ge=-1,
+        description="DRY penalty last_n. -1 uses full training context.",
+    )
+    dry_sequence_breakers: List[str] = Field(
+        default=["\n", ":", "\"", "*"],
+        description="DRY sequence breakers.",
+    )
 
     model_config = {
         "json_schema_extra": {
