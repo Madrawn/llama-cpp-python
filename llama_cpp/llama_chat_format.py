@@ -643,6 +643,11 @@ def chat_formatter_to_chat_completion_handler(
         logit_bias: Optional[Dict[str, float]] = None,
         logprobs: Optional[bool] = None,
         top_logprobs: Optional[int] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
         **kwargs,  # type: ignore
     ) -> Union[
         llama_types.CreateChatCompletionResponse,
@@ -746,6 +751,11 @@ def chat_formatter_to_chat_completion_handler(
             stopping_criteria=stopping_criteria,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
         if tool is not None:
             tool_name = tool["function"]["name"]
@@ -2883,6 +2893,11 @@ class Llava15ChatHandler:
         logit_bias: Optional[Dict[str, float]] = None,
         logprobs: Optional[bool] = None,
         top_logprobs: Optional[int] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
         **kwargs,  # type: ignore
     ) -> Union[
         llama_types.CreateChatCompletionResponse,
@@ -3112,6 +3127,11 @@ class Llava15ChatHandler:
             logits_processor=logits_processor,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
 
         if tool is not None:
@@ -3433,6 +3453,11 @@ class MTMDChatHandler:
         logit_bias: Optional[Dict[str, float]] = None,
         logprobs: Optional[bool] = None,
         top_logprobs: Optional[int] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
         **kwargs,  # type: ignore
     ) -> Union[
         llama_types.CreateChatCompletionResponse,
@@ -3646,6 +3671,11 @@ class MTMDChatHandler:
             logits_processor=logits_processor,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
 
         if tool is not None:
