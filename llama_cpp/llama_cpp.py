@@ -89,7 +89,8 @@ def _warn_deprecated(symbol: str, hint: str) -> None:
 #     GGML_TYPE_MXFP4   = 39,
 #     GGML_TYPE_NVFP4   = 40,
 #     GGML_TYPE_Q1_0    = 41,
-#     GGML_TYPE_COUNT   = 42,
+#     GGML_TYPE_Q2_0    = 42,
+#     GGML_TYPE_COUNT   = 43,
 # };
 GGML_TYPE_F32 = 0
 GGML_TYPE_F16 = 1
@@ -122,7 +123,8 @@ GGML_TYPE_IQ1_M = 29
 GGML_TYPE_MXFP4 = 39
 GGML_TYPE_NVFP4 = 40
 GGML_TYPE_Q1_0 = 41
-GGML_TYPE_COUNT = 42
+GGML_TYPE_Q2_0 = 42
+GGML_TYPE_COUNT = 43
 
 # from ggml-backend.h
 # typedef bool (*ggml_backend_sched_eval_callback)(struct ggml_tensor * t, bool ask, void * user_data);
@@ -411,6 +413,7 @@ LLAMA_TOKEN_ATTR_SINGLE_WORD = 1 << 9
 #     LLAMA_FTYPE_MOSTLY_MXFP4_MOE     = 38, // except 1d tensors
 #     LLAMA_FTYPE_MOSTLY_NVFP4         = 39, // except 1d tensors
 #     LLAMA_FTYPE_MOSTLY_Q1_0          = 40, // except 1d tensors
+#     LLAMA_FTYPE_MOSTLY_Q2_0          = 41, // except 1d tensors
 #
 #     LLAMA_FTYPE_GUESSED = 1024, // not specified in the model file
 # };
@@ -452,6 +455,7 @@ LLAMA_FTYPE_MOSTLY_TQ2_0 = 37
 LLAMA_FTYPE_MOSTLY_MXFP4_MOE = 38
 LLAMA_FTYPE_MOSTLY_NVFP4 = 39
 LLAMA_FTYPE_MOSTLY_Q1_0 = 40
+LLAMA_FTYPE_MOSTLY_Q2_0 = 41
 LLAMA_FTYPE_GUESSED = 1024
 
 # enum llama_rope_scaling_type {
@@ -1272,6 +1276,14 @@ def llama_flash_attn_type_name(flash_attn_type: int, /) -> Optional[bytes]:
     ...
 
 
+# // Get the model file type (quantization) as a string, e.g. "Q8_0" or "Q4_K - Medium"
+# LLAMA_API const char * llama_ftype_name(enum llama_ftype ftype);
+@ctypes_function("llama_ftype_name", [ctypes.c_int], ctypes.c_char_p)
+def llama_ftype_name(ftype: int, /) -> Optional[bytes]:
+    '''Get the model file type (quantization) as a string, e.g. "Q8_0" or "Q4_K - Medium"'''
+    ...
+
+
 # // Initialize the llama + ggml backend
 # // If numa is true, use NUMA optimizations
 # // Call once at the start of the program
@@ -1744,6 +1756,11 @@ def llama_model_n_embd_out(model: llama_model_p, /) -> int:
 def llama_model_n_layer(model: llama_model_p, /) -> int: ...
 
 
+# LLAMA_API int32_t llama_model_n_layer_nextn(const struct llama_model * model);
+@ctypes_function("llama_model_n_layer_nextn", [llama_model_p_ctypes], ctypes.c_int32)
+def llama_model_n_layer_nextn(model: llama_model_p, /) -> int: ...
+
+
 # LLAMA_API int32_t llama_model_n_head     (const struct llama_model * model);
 @ctypes_function("llama_model_n_head", [llama_model_p_ctypes], ctypes.c_int32)
 def llama_model_n_head(model: llama_model_p, /) -> int: ...
@@ -1772,7 +1789,8 @@ def llama_model_rope_freq_scale_train(model: llama_model_p, /) -> float: ...
 # LLAMA_API uint32_t llama_model_n_cls_out(const struct llama_model * model);
 @ctypes_function("llama_model_n_cls_out", [llama_model_p_ctypes], ctypes.c_uint32)
 def llama_model_n_cls_out(model: llama_model_p, /) -> int:
-    """Returns the number of classifier outputs (only valid for classifier models)"""
+    """Returns the number of classifier outputs (only valid for classifier models)
+    Undefined behavior for non-classifier models"""
     ...
 
 
@@ -1838,7 +1856,7 @@ def llama_model_meta_count(model: llama_model_p, /) -> int:
 # LLAMA_API const char * llama_model_meta_key_str(enum llama_model_meta_key key);
 @ctypes_function("llama_model_meta_key_str", [ctypes.c_int], ctypes.c_char_p)
 def llama_model_meta_key_str(key: int, /) -> Optional[bytes]:
-    """Get sampling metadata key name. Returns None if the key is invalid."""
+    """Get sampling metadata key name. Returns None if the key is invalid"""
     ...
 
 
@@ -1902,6 +1920,14 @@ def llama_model_desc(
     /,
 ) -> int:
     """Get a string describing the model type"""
+    ...
+
+
+# // Get the model file type (quantization), e.g. LLAMA_FTYPE_MOSTLY_Q8_0
+# LLAMA_API enum llama_ftype llama_model_ftype(const struct llama_model * model);
+@ctypes_function("llama_model_ftype", [llama_model_p_ctypes], ctypes.c_int)
+def llama_model_ftype(model: llama_model_p, /) -> int:
+    """Get the model file type (quantization), e.g. LLAMA_FTYPE_MOSTLY_Q8_0"""
     ...
 
 
@@ -2480,7 +2506,9 @@ def llama_memory_can_shift(mem: llama_memory_t, /) -> bool:
 # LLAMA_API size_t llama_state_get_size(struct llama_context * ctx);
 @ctypes_function("llama_state_get_size", [llama_context_p_ctypes], ctypes.c_size_t)
 def llama_state_get_size(ctx: llama_context_p, /) -> int:
-    """Returns the *actual* size in bytes of the state (logits, embedding and memory)"""
+    """Returns the *actual* size in bytes of the state
+    (logits, embedding and memory)
+    Only use when saving the state, not when restoring it, otherwise the size may be too small."""
     ...
 
 
@@ -3041,9 +3069,12 @@ def llama_batch_free(batch: llama_batch, /):
 #           struct llama_batch   batch);
 @ctypes_function("llama_encode", [llama_context_p_ctypes, llama_batch], ctypes.c_int32)
 def llama_encode(ctx: llama_context_p, batch: llama_batch, /) -> int:
-    """Process a batch of tokens using the encoder.
+    """Process a batch of tokens.
+    In contrast to llama_decode() - this call does not use KV cache.
+    For encode-decoder contexts, processes the batch using the encoder.
+    Can store the encoder output internally for later use by the decoder's cross-attention layers.
     0 - success
-    < 0 - error"""
+    < 0 - error. the memory state is restored to the state before this call"""
     ...
 
 
@@ -3065,9 +3096,15 @@ def llama_encode(ctx: llama_context_p, batch: llama_batch, /) -> int:
 @ctypes_function("llama_decode", [llama_context_p_ctypes, llama_batch], ctypes.c_int32)
 def llama_decode(ctx: llama_context_p, batch: llama_batch, /) -> int:
     """Process a batch of tokens.
+    Requires the context to have a memory.
+    For encode-decoder contexts, processes the batch using the decoder.
+    Positive return values does not mean a fatal error, but rather a warning.
+    Upon fatal-error or abort, the ubatches that managed to be been processed will remain in the memory state of the context
+    To handle this correctly, query the memory state using llama_memory_seq_pos_min() and llama_memory_seq_pos_max()
+    Upon other return values, the memory state is restored to the state before this call
     0 - success
     1 - could not find a KV slot for the batch (try reducing the size of the batch or increase the context)
-    2 - aborted (processed ubatches will remain in the context's memory)
+    2 - aborted     (processed ubatches will remain in the context's memory)
     -1 - invalid input batch
     < -1 - fatal error (processed ubatches will remain in the context's memory)"""
     ...
@@ -3103,7 +3140,7 @@ def llama_set_n_threads(
 # LLAMA_API int32_t llama_n_threads(struct llama_context * ctx);
 @ctypes_function("llama_n_threads", [llama_context_p_ctypes], ctypes.c_int32)
 def llama_n_threads(ctx: llama_context_p, /) -> int:
-    """Get the number of threads used for generation of a single token"""
+    """Get the number of threads used for generation of a single token."""
     ...
 
 
@@ -3111,7 +3148,7 @@ def llama_n_threads(ctx: llama_context_p, /) -> int:
 # LLAMA_API int32_t llama_n_threads_batch(struct llama_context * ctx);
 @ctypes_function("llama_n_threads_batch", [llama_context_p_ctypes], ctypes.c_int32)
 def llama_n_threads_batch(ctx: llama_context_p, /) -> int:
-    """Get the number of threads used for prompt and batch processing (multiple token)"""
+    """Get the number of threads used for prompt and batch processing (multiple token)."""
     ...
 
 
@@ -3120,7 +3157,8 @@ def llama_n_threads_batch(ctx: llama_context_p, /) -> int:
 # LLAMA_API void llama_set_embeddings(struct llama_context * ctx, bool embeddings);
 @ctypes_function("llama_set_embeddings", [llama_context_p_ctypes, ctypes.c_bool], None)
 def llama_set_embeddings(ctx: llama_context_p, embeddings: bool, /):
-    """Set whether the context outputs embeddings or not"""
+    """Set whether the context outputs embeddings or not
+    TODO: rename to avoid confusion with llama_get_embeddings()"""
     ...
 
 
