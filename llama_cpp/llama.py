@@ -783,7 +783,6 @@ class Llama:
             f"[DRY] _init_sampler: dry_multiplier={dry_multiplier} dry_base={dry_base} "
             f"dry_allowed_length={dry_allowed_length} dry_penalty_last_n={dry_penalty_last_n} "
             f"dry_sequence_breakers={dry_sequence_breakers}",
-            flush=True,
             file=_sys.stderr,
         )
         if dry_multiplier > 0.0:
@@ -2163,6 +2162,7 @@ class Llama:
         dry_allowed_length: int = 3,
         dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
+        **kwargs,
     ) -> Union[
         CreateChatCompletionResponse, Iterator[CreateChatCompletionStreamResponse]
     ]:
@@ -2239,6 +2239,7 @@ class Llama:
             dry_allowed_length=dry_allowed_length,
             dry_penalty_last_n=dry_penalty_last_n,
             dry_sequence_breakers=dry_sequence_breakers,
+            **kwargs,
         )
 
     def create_chat_completion_openai_v1(
