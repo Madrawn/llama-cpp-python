@@ -721,7 +721,7 @@ class Llama:
         dry_multiplier: float = 0.0,
         dry_base: float = 1.75,
         dry_allowed_length: int = 3,
-        dry_penalty_last_n: int = 512,
+        dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
     ):
         sampler = internals.LlamaSampler()
@@ -864,7 +864,7 @@ class Llama:
         dry_multiplier: float = 0.0,
         dry_base: float = 1.75,
         dry_allowed_length: int = 3,
-        dry_penalty_last_n: int = 512,
+        dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
         idx: Optional[int] = None,
     ):
@@ -939,7 +939,7 @@ class Llama:
         dry_multiplier: float = 0.0,
         dry_base: float = 1.75,
         dry_allowed_length: int = 3,
-        dry_penalty_last_n: int = 512,
+        dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Generator[int, Optional[Sequence[int]], None]:
         """Create a generator of tokens from a prompt.
@@ -1302,7 +1302,7 @@ class Llama:
         dry_multiplier: float = 0.0,
         dry_base: float = 1.75,
         dry_allowed_length: int = 3,
-        dry_penalty_last_n: int = 512,
+        dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[
         Iterator[CreateCompletionResponse], Iterator[CreateCompletionStreamResponse]
@@ -1932,7 +1932,7 @@ class Llama:
         dry_multiplier: float = 0.0,
         dry_base: float = 1.75,
         dry_allowed_length: int = 3,
-        dry_penalty_last_n: int = 512,
+        dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[CreateCompletionResponse, Iterator[CreateCompletionStreamResponse]]:
         """Generate text from a prompt.
@@ -2039,7 +2039,7 @@ class Llama:
         dry_multiplier: float = 0.0,
         dry_base: float = 1.75,
         dry_allowed_length: int = 3,
-        dry_penalty_last_n: int = 512,
+        dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[CreateCompletionResponse, Iterator[CreateCompletionStreamResponse]]:
         """Generate text from a prompt.
@@ -2144,7 +2144,7 @@ class Llama:
         dry_multiplier: float = 0.0,
         dry_base: float = 1.75,
         dry_allowed_length: int = 3,
-        dry_penalty_last_n: int = 512,
+        dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[
         CreateChatCompletionResponse, Iterator[CreateChatCompletionStreamResponse]

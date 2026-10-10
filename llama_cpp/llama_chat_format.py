@@ -645,7 +645,7 @@ def chat_formatter_to_chat_completion_handler(
         dry_multiplier: float = 0.0,
         dry_base: float = 1.75,
         dry_allowed_length: int = 3,
-        dry_penalty_last_n: int = 512,
+        dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
         **kwargs,  # type: ignore
     ) -> Union[
@@ -2894,7 +2894,7 @@ class Llava15ChatHandler:
         dry_multiplier: float = 0.0,
         dry_base: float = 1.75,
         dry_allowed_length: int = 3,
-        dry_penalty_last_n: int = 512,
+        dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
         **kwargs,  # type: ignore
     ) -> Union[
@@ -3455,7 +3455,7 @@ class MTMDChatHandler:
         dry_multiplier: float = 0.0,
         dry_base: float = 1.75,
         dry_allowed_length: int = 3,
-        dry_penalty_last_n: int = 512,
+        dry_penalty_last_n: int = -1,
         dry_sequence_breakers: Optional[List[str]] = None,
         **kwargs,  # type: ignore
     ) -> Union[
