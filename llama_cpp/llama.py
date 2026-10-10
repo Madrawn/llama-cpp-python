@@ -763,7 +763,6 @@ class Llama:
         if dry_multiplier > 0.0:
             sampler.add_dry(
                 model=self._model,
-                n_ctx_train=self._model.n_ctx_train(),
                 dry_multiplier=dry_multiplier,
                 dry_base=dry_base,
                 dry_allowed_length=dry_allowed_length,
