@@ -858,6 +858,15 @@ class llama_model_imatrix_data(ctypes.Structure):
 #     bool no_alloc;        // only load metadata and simulate memory allocations
 #     bool load_mtp;        // whether to load MTP layers
 # };
+class llama_model_tensor_buft_override(ctypes.Structure):
+    """Buffer type override for tensors matching a pattern."""
+
+    _fields_ = [
+        ("pattern", ctypes.c_char_p),
+        ("buft", ctypes.c_void_p),
+    ]
+
+
 class llama_model_params(ctypes.Structure):
     """Parameters for llama_model
 
@@ -1464,6 +1473,51 @@ def llama_model_load_from_file(
 
     If the split file name does not follow this pattern, use llama_model_load_from_splits"""
     ...
+
+
+_common_fit_library = None
+_common_fit_function = None
+
+
+def llama_common_fit_params(
+    path_model: bytes,
+    mparams: llama_model_params,
+    cparams: llama_context_params,
+    tensor_split,
+    tensor_buft_overrides,
+    margins,
+    n_ctx_min: int,
+) -> int:
+    """Fit model and context parameters to available device memory.
+
+    Modifies mparams and cparams in place to fit within the margins.
+    Returns 0 on success, non-zero on failure.
+    """
+    global _common_fit_library, _common_fit_function
+
+    if _common_fit_function is None:
+        _common_fit_library = load_shared_library("llama-common", _base_path)
+        _common_fit_function = _common_fit_library.llama_common_fit_params
+        _common_fit_function.argtypes = [
+            ctypes.c_char_p,
+            ctypes.POINTER(llama_model_params),
+            ctypes.POINTER(llama_context_params),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(llama_model_tensor_buft_override),
+            ctypes.POINTER(ctypes.c_size_t),
+            ctypes.c_uint32,
+        ]
+        _common_fit_function.restype = ctypes.c_int32
+
+    return _common_fit_function(
+        path_model,
+        ctypes.byref(mparams),
+        ctypes.byref(cparams),
+        tensor_split,
+        tensor_buft_overrides,
+        margins,
+        n_ctx_min,
+    )
 
 
 # // Load the model from multiple splits (support custom naming scheme)
