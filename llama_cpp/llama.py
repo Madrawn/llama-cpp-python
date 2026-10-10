@@ -16,6 +16,7 @@ import pathlib
 
 from typing import (
     Any,
+    Iterable,
     List,
     Literal,
     Optional,
@@ -120,6 +121,7 @@ class Llama:
         verbose: bool = True,
         cpu_moe: bool = False,
         n_cpu_moe: int = -1,
+        tensor_buft_overrides: Optional[Iterable[str]] = None,
         # Extra Params
         **kwargs,  # type: ignore
     ):
@@ -252,7 +254,10 @@ class Llama:
 
         self._cpu_moe_tensor_buft_overrides = None
         self._cpu_moe_tensor_patterns = None
-        cpu_moe_patterns = _build_cpu_moe_patterns(cpu_moe=cpu_moe, n_cpu_moe=n_cpu_moe)
+        if tensor_buft_overrides is not None:
+            cpu_moe_patterns = [p.encode() for p in tensor_buft_overrides]
+        else:
+            cpu_moe_patterns = _build_cpu_moe_patterns(cpu_moe=cpu_moe, n_cpu_moe=n_cpu_moe)
         if cpu_moe_patterns:
             buft = _cpu_backend_buffer_type()
             override_type = llama_model_tensor_buft_override

@@ -76,6 +76,10 @@ class ModelSettings(BaseSettings):
         default=False,
         description="Whether to offload all Mixture of Experts (MoE) layers to the CPU. Overrides n_cpu_moe if both are set.",
     )
+    tensor_buft_overrides: Optional[List[str]] = Field(
+        default=None,
+        description="List of regex patterns for tensors to keep on CPU. Takes precedence over cpu_moe/n_cpu_moe.",
+    )
     n_batch: int = Field(
         default=512, ge=1, description="The batch size to use per eval."
     )

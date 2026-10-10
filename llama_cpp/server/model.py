@@ -280,6 +280,7 @@ class LlamaProxy:
             seed=settings.seed,
             n_cpu_moe=settings.n_cpu_moe,
             cpu_moe=settings.cpu_moe,
+            tensor_buft_overrides=settings.tensor_buft_overrides,
             n_ctx=settings.n_ctx,
             n_batch=settings.n_batch,
             n_ubatch=settings.n_ubatch,
