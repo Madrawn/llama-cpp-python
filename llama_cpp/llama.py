@@ -760,39 +760,7 @@ class Llama:
             # ignore_eos=False,
         )
 
-        import sys as _sys
-
-        print(
-            f"[DRY] _init_sampler: dry_multiplier={dry_multiplier} dry_base={dry_base} "
-            f"dry_allowed_length={dry_allowed_length} dry_penalty_last_n={dry_penalty_last_n} "
-            f"dry_sequence_breakers={dry_sequence_breakers}",
-            flush=True,
-            file=_sys.stderr,
-        )
         if dry_multiplier > 0.0:
-            # # --- PROBE: logit dump after DRY, before top_k/top_p ---
-            # def __dry_probe(prefix):
-            #     def _dry_probe(token_data_array):
-            #         size = token_data_array.contents.size
-            #         arr = token_data_array.contents.data
-            #         ids_logits = [(arr[i].id, arr[i].logit) for i in range(size)]
-            #         ids_logits.sort(key=lambda x: -x[1])
-            #         print(
-            #             f"{prefix} [DRY-probe] top-8: "
-            #             + ", ".join(f"t={t} l={l:.1f}" for t, l in ids_logits[:8]),
-            #             flush=True,
-            #         )
-
-            #     return _dry_probe
-
-            # sampler.add_custom(__dry_probe("before"))
-            # print(
-            #     f"[DRY] add_dry ENABLED: multiplier={dry_multiplier} base={dry_base} "
-            #     f"allowed_length={dry_allowed_length} last_n={dry_penalty_last_n} "
-            #     f"breakers={dry_sequence_breakers}",
-            #     flush=True,
-            #     file=_sys.stderr,
-            # )
             sampler.add_dry(
                 model=self._model,
                 n_ctx_train=self._model.n_ctx_train(),
@@ -806,9 +774,6 @@ class Llama:
                     else ["\n", ":", '"', "*"]
                 ),
             )
-
-            # sampler.add_custom(__dry_probe("after"))
-            # --------------------------------------------------------
 
         if grammar is not None:
             sampler.add_grammar(self._model, grammar)
