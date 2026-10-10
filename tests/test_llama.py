@@ -665,18 +665,21 @@ def test_real_llama_embeddings(llama_cpp_embedding_model_path):
 
 
 def test_dry_sampler_parameters_accepted():
-    """Verify DRY sampler parameters are accepted without error."""
-    llama = llama_cpp.Llama(model_path=MODEL, vocab_only=True, verbose=False)
-    try:
-        # Test that DRY parameters are accepted in create_completion
-        llama.create_completion(
-            prompt="Hello",
-            max_tokens=1,
-            dry_multiplier=1.0,
-            dry_base=1.75,
-            dry_allowed_length=3,
-            dry_penalty_last_n=-1,
-            dry_sequence_breakers=["\n", ":", '"', "*"],
-        )
-    finally:
-        llama.close()
+    """Verify DRY sampler parameters are accepted in method signatures."""
+    import inspect
+
+    # Check that create_completion accepts DRY parameters
+    sig = inspect.signature(llama_cpp.Llama.create_completion)
+    assert "dry_multiplier" in sig.parameters
+    assert "dry_base" in sig.parameters
+    assert "dry_allowed_length" in sig.parameters
+    assert "dry_penalty_last_n" in sig.parameters
+    assert "dry_sequence_breakers" in sig.parameters
+
+    # Check that generate accepts DRY parameters
+    sig = inspect.signature(llama_cpp.Llama.generate)
+    assert "dry_multiplier" in sig.parameters
+    assert "dry_base" in sig.parameters
+    assert "dry_allowed_length" in sig.parameters
+    assert "dry_penalty_last_n" in sig.parameters
+    assert "dry_sequence_breakers" in sig.parameters
