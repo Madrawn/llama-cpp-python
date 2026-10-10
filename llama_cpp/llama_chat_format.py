@@ -1993,9 +1993,9 @@ def functionary_v1_v2_chat_handler(
                         role="system",
                         content=generate_schema_from_functions(
                             [
-                            tool["function"]
-                            for tool in tools
-                            if tool["type"] == "function"
+                                tool["function"]
+                                for tool in tools
+                                if tool["type"] == "function"
                             ]
                         ),
                     )
@@ -2307,8 +2307,8 @@ def functionary_v1_v2_chat_handler(
                     grammar = get_grammar(function_name)
                     tool_id = "".join(
                         [
-                        random.choice(string.ascii_letters + string.digits)
-                        for _ in range(24)
+                            random.choice(string.ascii_letters + string.digits)
+                            for _ in range(24)
                         ]
                     )
                     if tools is not None:
@@ -2687,18 +2687,18 @@ def functionary_v1_v2_chat_handler(
         for function_call, function_body in zip(function_calls, function_bodies):
             tool_calls.append(
                 {
-                "id": "call_"
+                    "id": "call_"
                     + "".join(
                         [
-                    random.choice(string.ascii_letters + string.digits)
-                    for _ in range(24)
+                            random.choice(string.ascii_letters + string.digits)
+                            for _ in range(24)
                         ]
                     ),
-                "type": "function",
-                "function": {
-                    "name": function_call,
-                    "arguments": function_body,
-                },
+                    "type": "function",
+                    "function": {
+                        "name": function_call,
+                        "arguments": function_body,
+                    },
                 }
             )
 
