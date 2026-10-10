@@ -662,3 +662,21 @@ def test_real_llama_embeddings(llama_cpp_embedding_model_path):
     repeated_embeddings = model.embed(list(reversed(prompts)))
     assert len(repeated_embeddings) == len(prompts)
     assert all(len(repeated) == len(embedding) for repeated in repeated_embeddings)
+
+
+def test_dry_sampler_parameters_accepted():
+    """Verify DRY sampler parameters are accepted without error."""
+    llama = llama_cpp.Llama(model_path=MODEL, vocab_only=True, verbose=False)
+    try:
+        # Test that DRY parameters are accepted in create_completion
+        llama.create_completion(
+            prompt="Hello",
+            max_tokens=1,
+            dry_multiplier=1.0,
+            dry_base=1.75,
+            dry_allowed_length=3,
+            dry_penalty_last_n=-1,
+            dry_sequence_breakers=["\n", ":", '"', "*"],
+        )
+    finally:
+        llama.close()
