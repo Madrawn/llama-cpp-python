@@ -755,6 +755,7 @@ def chat_formatter_to_chat_completion_handler(
             dry_allowed_length=dry_allowed_length,
             dry_penalty_last_n=dry_penalty_last_n,
             dry_sequence_breakers=dry_sequence_breakers,
+            **kwargs,
         )
         if tool is not None:
             tool_name = tool["function"]["name"]
@@ -1709,6 +1710,7 @@ def functionary_chat_handler(
             dry_allowed_length=dry_allowed_length,
             dry_penalty_last_n=dry_penalty_last_n,
             dry_sequence_breakers=dry_sequence_breakers,
+            **kwargs,
         )
         return _convert_completion_to_chat(
             completion_or_completion_chunks, stream=stream
@@ -1727,6 +1729,7 @@ def functionary_chat_handler(
             dry_allowed_length=dry_allowed_length,
             dry_penalty_last_n=dry_penalty_last_n,
             dry_sequence_breakers=dry_sequence_breakers,
+            **kwargs,
         )  # type: ignore
         completion_text = completion["choices"][0]["text"]
         # strip " to=functions." and ending ":"
@@ -1803,6 +1806,7 @@ def functionary_chat_handler(
         dry_allowed_length=dry_allowed_length,
         dry_penalty_last_n=dry_penalty_last_n,
         dry_sequence_breakers=dry_sequence_breakers,
+        **kwargs,
     )  # type: ignore
 
     assert "usage" in completion
@@ -2104,6 +2108,7 @@ def functionary_v1_v2_chat_handler(
             dry_allowed_length=dry_allowed_length,
             dry_penalty_last_n=dry_penalty_last_n,
             dry_sequence_breakers=dry_sequence_breakers,
+            **kwargs,
         )
         if stream is False:
             completion_or_completion_chunks["choices"][0]["text"] = (
@@ -2174,6 +2179,7 @@ def functionary_v1_v2_chat_handler(
                 dry_allowed_length=dry_allowed_length,
                 dry_penalty_last_n=dry_penalty_last_n,
                 dry_sequence_breakers=dry_sequence_breakers,
+                **kwargs,
             ),
         )
 
