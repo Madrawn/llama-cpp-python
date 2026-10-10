@@ -1927,6 +1927,11 @@ class Llama:
             logits_processor: A list of logits processors to use.
             grammar: A grammar to use for constrained sampling.
             logit_bias: A logit bias to use.
+            dry_multiplier: The DRY (Don't Repeat Yourself) multiplier. Higher values penalize repetition more. Set to 0.0 to disable.
+            dry_base: The DRY base value. Controls the strength of the repetition penalty.
+            dry_allowed_length: The DRY allowed length. Sequences shorter than this are not penalized.
+            dry_penalty_last_n: The DRY penalty last-n window. Uses full training context if -1.
+            dry_sequence_breakers: Strings that reset the DRY repetition window.
 
         Raises:
             ValueError: If the requested tokens exceed the context window.
@@ -2034,6 +2039,11 @@ class Llama:
             logits_processor: A list of logits processors to use.
             grammar: A grammar to use for constrained sampling.
             logit_bias: A logit bias to use.
+            dry_multiplier: The DRY (Don't Repeat Yourself) multiplier. Higher values penalize repetition more. Set to 0.0 to disable.
+            dry_base: The DRY base value. Controls the strength of the repetition penalty.
+            dry_allowed_length: The DRY allowed length. Sequences shorter than this are not penalized.
+            dry_penalty_last_n: The DRY penalty last-n window. Uses full training context if -1.
+            dry_sequence_breakers: Strings that reset the DRY repetition window.
 
         Raises:
             ValueError: If the requested tokens exceed the context window.
@@ -2142,6 +2152,11 @@ class Llama:
             logits_processor: A list of logits processors to use.
             grammar: A grammar to use.
             logit_bias: A logit bias to use.
+            dry_multiplier: The DRY (Don't Repeat Yourself) multiplier. Higher values penalize repetition more. Set to 0.0 to disable.
+            dry_base: The DRY base value. Controls the strength of the repetition penalty.
+            dry_allowed_length: The DRY allowed length. Sequences shorter than this are not penalized.
+            dry_penalty_last_n: The DRY penalty last-n window. Uses full training context if -1.
+            dry_sequence_breakers: Strings that reset the DRY repetition window.
 
         Returns:
             Generated chat completion or a stream of chat completion chunks.
