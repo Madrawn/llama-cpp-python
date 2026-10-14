@@ -642,6 +642,11 @@ def chat_formatter_to_chat_completion_handler(
         logit_bias: Optional[Dict[str, float]] = None,
         logprobs: Optional[bool] = None,
         top_logprobs: Optional[int] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
         **kwargs,  # type: ignore
     ) -> Union[
         llama_types.CreateChatCompletionResponse,
@@ -745,6 +750,12 @@ def chat_formatter_to_chat_completion_handler(
             stopping_criteria=stopping_criteria,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
+            **kwargs,
         )
         if tool is not None:
             tool_name = tool["function"]["name"]
@@ -1483,6 +1494,11 @@ def functionary_chat_handler(
     model: Optional[str] = None,
     logits_processor: Optional[llama.LogitsProcessorList] = None,
     grammar: Optional[llama.LlamaGrammar] = None,
+    dry_multiplier: float = 0.0,
+    dry_base: float = 1.75,
+    dry_allowed_length: int = 3,
+    dry_penalty_last_n: int = -1,
+    dry_sequence_breakers: Optional[List[str]] = None,
     **kwargs,  # type: ignore
 ) -> Union[llama_types.ChatCompletion, Iterator[llama_types.ChatCompletionChunk]]:
     SYSTEM_MESSAGE = """A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with appropriate input when necessary"""
@@ -1689,6 +1705,12 @@ def functionary_chat_handler(
             model=model,
             logits_processor=logits_processor,
             grammar=grammar,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
+            **kwargs,
         )
         return _convert_completion_to_chat(
             completion_or_completion_chunks, stream=stream
@@ -1699,7 +1721,15 @@ def functionary_chat_handler(
     ):
         stop = "\n"
         completion: llama_types.Completion = llama.create_completion(
-            prompt=prompt, stop=stop, stream=False
+            prompt=prompt,
+            stop=stop,
+            stream=False,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
+            **kwargs,
         )  # type: ignore
         completion_text = completion["choices"][0]["text"]
         # strip " to=functions." and ending ":"
@@ -1771,6 +1801,12 @@ def functionary_chat_handler(
         mirostat_eta=mirostat_eta,
         model=model,
         logits_processor=logits_processor,
+        dry_multiplier=dry_multiplier,
+        dry_base=dry_base,
+        dry_allowed_length=dry_allowed_length,
+        dry_penalty_last_n=dry_penalty_last_n,
+        dry_sequence_breakers=dry_sequence_breakers,
+        **kwargs,
     )  # type: ignore
 
     assert "usage" in completion
@@ -1846,6 +1882,11 @@ def functionary_v1_v2_chat_handler(
     model: Optional[str] = None,
     logits_processor: Optional[llama.LogitsProcessorList] = None,
     grammar: Optional[llama.LlamaGrammar] = None,
+    dry_multiplier: float = 0.0,
+    dry_base: float = 1.75,
+    dry_allowed_length: int = 3,
+    dry_penalty_last_n: int = -1,
+    dry_sequence_breakers: Optional[List[str]] = None,
     **kwargs,  # type: ignore
 ) -> Union[llama_types.ChatCompletion, Iterator[llama_types.ChatCompletionChunk]]:
     SYSTEM_MESSAGE = """A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with appropriate input when necessary"""
@@ -2062,6 +2103,12 @@ def functionary_v1_v2_chat_handler(
             model=model,
             logits_processor=logits_processor,
             grammar=grammar,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
+            **kwargs,
         )
         if stream is False:
             completion_or_completion_chunks["choices"][0]["text"] = (
@@ -2127,6 +2174,12 @@ def functionary_v1_v2_chat_handler(
                 model=model,
                 logits_processor=logits_processor,
                 grammar=grammar,
+                dry_multiplier=dry_multiplier,
+                dry_base=dry_base,
+                dry_allowed_length=dry_allowed_length,
+                dry_penalty_last_n=dry_penalty_last_n,
+                dry_sequence_breakers=dry_sequence_breakers,
+                **kwargs,
             ),
         )
 
@@ -2881,6 +2934,11 @@ class Llava15ChatHandler:
         logit_bias: Optional[Dict[str, float]] = None,
         logprobs: Optional[bool] = None,
         top_logprobs: Optional[int] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
         **kwargs,  # type: ignore
     ) -> Union[
         llama_types.CreateChatCompletionResponse,
@@ -3112,6 +3170,11 @@ class Llava15ChatHandler:
             logits_processor=logits_processor,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
 
         if tool is not None:
@@ -3432,6 +3495,11 @@ class MTMDChatHandler:
         logit_bias: Optional[Dict[str, float]] = None,
         logprobs: Optional[bool] = None,
         top_logprobs: Optional[int] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
         **kwargs,  # type: ignore
     ) -> Union[
         llama_types.CreateChatCompletionResponse,
@@ -3647,6 +3715,11 @@ class MTMDChatHandler:
             logits_processor=logits_processor,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
 
         if tool is not None:

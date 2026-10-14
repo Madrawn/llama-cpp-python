@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- feat(sampler): add support for DRY sampler parameters by @Madrawn in #PR_NUMBER
+
 - feat(llama): add CPU MoE offloading support via cpu_moe and n_cpu_moe parameters (high-level API and server)
 
 ## [0.3.36]

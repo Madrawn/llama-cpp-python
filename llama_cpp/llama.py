@@ -744,6 +744,11 @@ class Llama:
         penalize_nl: bool = True,
         logits_processor: Optional[LogitsProcessorList] = None,
         grammar: Optional[LlamaGrammar] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ):
         sampler = internals.LlamaSampler()
 
@@ -780,6 +785,20 @@ class Llama:
             # penalize_nl=penalize_nl,
             # ignore_eos=False,
         )
+
+        if dry_multiplier > 0.0:
+            sampler.add_dry(
+                model=self._model,
+                dry_multiplier=dry_multiplier,
+                dry_base=dry_base,
+                dry_allowed_length=dry_allowed_length,
+                dry_penalty_last_n=dry_penalty_last_n,
+                seq_breakers=(
+                    dry_sequence_breakers
+                    if dry_sequence_breakers is not None
+                    else ["\n", ":", '"', "*"]
+                ),
+            )
 
         if grammar is not None:
             sampler.add_grammar(self._model, grammar)
@@ -832,6 +851,11 @@ class Llama:
         penalize_nl: bool = True,
         logits_processor: Optional[LogitsProcessorList] = None,
         grammar: Optional[LlamaGrammar] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
         idx: Optional[int] = None,
     ):
         """Sample a token from the model.
@@ -867,6 +891,11 @@ class Llama:
                 penalize_nl=penalize_nl,
                 logits_processor=logits_processor,
                 grammar=grammar,
+                dry_multiplier=dry_multiplier,
+                dry_base=dry_base,
+                dry_allowed_length=dry_allowed_length,
+                dry_penalty_last_n=dry_penalty_last_n,
+                dry_sequence_breakers=dry_sequence_breakers,
             )
 
         ridx = idx - self.n_tokens if idx is not None else -1
@@ -891,12 +920,17 @@ class Llama:
         presence_penalty: float = 0.0,
         tfs_z: float = 1.0,
         mirostat_mode: int = 0,
-        mirostat_tau: float = 5.0,
         mirostat_eta: float = 0.1,
+        mirostat_tau: float = 5.0,
         penalize_nl: bool = True,
         logits_processor: Optional[LogitsProcessorList] = None,
         stopping_criteria: Optional[StoppingCriteriaList] = None,
         grammar: Optional[LlamaGrammar] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Generator[int, Optional[Sequence[int]], None]:
         """Create a generator of tokens from a prompt.
 
@@ -935,6 +969,11 @@ class Llama:
             penalize_nl=penalize_nl,
             logits_processor=logits_processor,
             grammar=grammar,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
 
         tokens = list(tokens)
@@ -1018,6 +1057,11 @@ class Llama:
                     logits_processor=logits_processor,
                     grammar=grammar,
                     penalize_nl=penalize_nl,
+                    dry_multiplier=dry_multiplier,
+                    dry_base=dry_base,
+                    dry_allowed_length=dry_allowed_length,
+                    dry_penalty_last_n=dry_penalty_last_n,
+                    dry_sequence_breakers=dry_sequence_breakers,
                     idx=sample_idx,
                 )
 
@@ -1245,6 +1289,11 @@ class Llama:
         logits_processor: Optional[LogitsProcessorList] = None,
         grammar: Optional[LlamaGrammar] = None,
         logit_bias: Optional[Dict[int, float]] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[
         Iterator[CreateCompletionResponse], Iterator[CreateCompletionStreamResponse]
     ]:
@@ -1434,6 +1483,11 @@ class Llama:
             stopping_criteria=stopping_criteria,
             logits_processor=logits_processor,
             grammar=grammar,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         ):
             if llama_cpp.llama_vocab_is_eog(self._model.vocab, token):
                 text = self.detokenize(completion_tokens, prev_tokens=prompt_tokens)
@@ -1865,6 +1919,11 @@ class Llama:
         logits_processor: Optional[LogitsProcessorList] = None,
         grammar: Optional[LlamaGrammar] = None,
         logit_bias: Optional[Dict[int, float]] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[CreateCompletionResponse, Iterator[CreateCompletionStreamResponse]]:
         """Generate text from a prompt.
 
@@ -1894,6 +1953,11 @@ class Llama:
             logits_processor: A list of logits processors to use.
             grammar: A grammar to use for constrained sampling.
             logit_bias: A logit bias to use.
+            dry_multiplier: The DRY (Don't Repeat Yourself) multiplier. Higher values penalize repetition more. Set to 0.0 to disable.
+            dry_base: The DRY base value. Controls the strength of the repetition penalty.
+            dry_allowed_length: The DRY allowed length. Sequences shorter than this are not penalized.
+            dry_penalty_last_n: The DRY penalty last-n window. Uses full training context if -1.
+            dry_sequence_breakers: Strings that reset the DRY repetition window.
 
         Raises:
             ValueError: If the requested tokens exceed the context window.
@@ -1928,6 +1992,11 @@ class Llama:
             logits_processor=logits_processor,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
         if stream:
             chunks: Iterator[CreateCompletionStreamResponse] = completion_or_chunks
@@ -1962,6 +2031,11 @@ class Llama:
         logits_processor: Optional[LogitsProcessorList] = None,
         grammar: Optional[LlamaGrammar] = None,
         logit_bias: Optional[Dict[int, float]] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[CreateCompletionResponse, Iterator[CreateCompletionStreamResponse]]:
         """Generate text from a prompt.
 
@@ -1991,6 +2065,11 @@ class Llama:
             logits_processor: A list of logits processors to use.
             grammar: A grammar to use for constrained sampling.
             logit_bias: A logit bias to use.
+            dry_multiplier: The DRY (Don't Repeat Yourself) multiplier. Higher values penalize repetition more. Set to 0.0 to disable.
+            dry_base: The DRY base value. Controls the strength of the repetition penalty.
+            dry_allowed_length: The DRY allowed length. Sequences shorter than this are not penalized.
+            dry_penalty_last_n: The DRY penalty last-n window. Uses full training context if -1.
+            dry_sequence_breakers: Strings that reset the DRY repetition window.
 
         Raises:
             ValueError: If the requested tokens exceed the context window.
@@ -2025,6 +2104,11 @@ class Llama:
             logits_processor=logits_processor,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
 
     def create_chat_completion(
@@ -2057,6 +2141,11 @@ class Llama:
         logit_bias: Optional[Dict[int, float]] = None,
         logprobs: Optional[bool] = None,
         top_logprobs: Optional[int] = None,
+        dry_multiplier: float = 0.0,
+        dry_base: float = 1.75,
+        dry_allowed_length: int = 3,
+        dry_penalty_last_n: int = -1,
+        dry_sequence_breakers: Optional[List[str]] = None,
     ) -> Union[
         CreateChatCompletionResponse, Iterator[CreateChatCompletionStreamResponse]
     ]:
@@ -2089,6 +2178,11 @@ class Llama:
             logits_processor: A list of logits processors to use.
             grammar: A grammar to use.
             logit_bias: A logit bias to use.
+            dry_multiplier: The DRY (Don't Repeat Yourself) multiplier. Higher values penalize repetition more. Set to 0.0 to disable.
+            dry_base: The DRY base value. Controls the strength of the repetition penalty.
+            dry_allowed_length: The DRY allowed length. Sequences shorter than this are not penalized.
+            dry_penalty_last_n: The DRY penalty last-n window. Uses full training context if -1.
+            dry_sequence_breakers: Strings that reset the DRY repetition window.
 
         Returns:
             Generated chat completion or a stream of chat completion chunks.
@@ -2128,6 +2222,11 @@ class Llama:
             logits_processor=logits_processor,
             grammar=grammar,
             logit_bias=logit_bias,
+            dry_multiplier=dry_multiplier,
+            dry_base=dry_base,
+            dry_allowed_length=dry_allowed_length,
+            dry_penalty_last_n=dry_penalty_last_n,
+            dry_sequence_breakers=dry_sequence_breakers,
         )
 
     def create_chat_completion_openai_v1(
