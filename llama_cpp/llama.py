@@ -64,6 +64,9 @@ class Llama:
         *,
         # Model Params
         n_gpu_layers: int = 0,
+        fit: bool = False,
+        fit_target_mib: int = 1024,
+        fit_min_ctx: int = 4096,
         split_mode: int = llama_cpp.LLAMA_SPLIT_MODE_LAYER,
         main_gpu: int = 0,
         tensor_split: Optional[List[float]] = None,
@@ -408,6 +411,16 @@ class Llama:
 
         if not os.path.exists(model_path):
             raise ValueError(f"Model path does not exist: {model_path}")
+
+        self._requested_n_gpu_layers = self.model_params.n_gpu_layers
+        self.fit = fit
+        self.fit_target_mib = self._parse_fit_target_mib(fit_target_mib)
+        self.fit_min_ctx = self._parse_fit_min_ctx(fit_min_ctx)
+        self._fit_tensor_split = None
+        self._fit_tensor_buft_overrides = None
+        self._fit_margins = None
+
+        self._fit_model_params()
 
         self._model = self._stack.enter_context(
             contextlib.closing(
@@ -2269,7 +2282,10 @@ class Llama:
         return dict(
             model_path=self.model_path,
             # Model Params
-            n_gpu_layers=self.model_params.n_gpu_layers,
+            n_gpu_layers=self._requested_n_gpu_layers,
+            fit=self.fit,
+            fit_target_mib=self.fit_target_mib,
+            fit_min_ctx=self.fit_min_ctx,
             split_mode=self.model_params.split_mode,
             main_gpu=self.model_params.main_gpu,
             tensor_split=self.tensor_split,
@@ -2416,6 +2432,52 @@ class Llama:
     def pooling_type(self) -> str:
         """Return the pooling type."""
         return self._ctx.pooling_type()
+
+    @staticmethod
+    def _parse_fit_target_mib(value: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise TypeError("fit_target_mib must be a non-negative int")
+        max_size = (1 << (ctypes.sizeof(ctypes.c_size_t) * 8)) - 1
+        if value < 0 or value > max_size // (1024 * 1024):
+            raise ValueError("fit_target_mib is outside the supported range")
+        return value
+
+    @staticmethod
+    def _parse_fit_min_ctx(value: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise TypeError("fit_min_ctx must be a non-negative int")
+        if value < 0 or value > 0xFFFFFFFF:
+            raise ValueError("fit_min_ctx is outside the supported range")
+        return value
+
+    def _fit_model_params(self) -> None:
+        if not self.fit:
+            return
+        if self.model_params.n_gpu_layers != 0:
+            raise ValueError("fit=True requires n_gpu_layers=0")
+
+        device_count = llama_cpp.LLAMA_MAX_DEVICES
+        self._fit_tensor_split = (ctypes.c_float * device_count)()
+        max_overrides = llama_cpp.llama_max_tensor_buft_overrides()
+        self._fit_tensor_buft_overrides = (
+            llama_cpp.llama_model_tensor_buft_override * max_overrides
+        )()
+        margin = self.fit_target_mib * 1024 * 1024
+        self._fit_margins = (ctypes.c_size_t * device_count)(*[margin] * device_count)
+
+        status = llama_cpp.llama_common_fit_params(
+            self.model_path.encode("utf-8"),
+            self.model_params,
+            self.context_params,
+            self._fit_tensor_split,
+            self._fit_tensor_buft_overrides,
+            self._fit_margins,
+            self.fit_min_ctx,
+        )
+        if status != 0:
+            raise RuntimeError(
+                f"llama.cpp parameter fitting failed with status {status}"
+            )
 
     def close(self) -> None:
         """Explicitly free the model from memory."""
